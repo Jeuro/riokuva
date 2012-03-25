@@ -4,6 +4,7 @@
  */
 package riokuva;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -13,27 +14,29 @@ import java.io.IOException;
  * @author Jussi Kirjavainen
  */
 public class ImageProcessingMain {
-        
-        // ImageParser siirretty kokonaisuudessaan omaan luokkaansa
-    
+            
     public static void main(String[] args) throws IOException {
-        final long endTime;
-        final long startTime = System.nanoTime();
-        final String filename = args[0]; 
-
+        
+        if (args.length != 2) {
+            showUsage();
+            System.exit(1);
+        }
+        // TODO testaa että infile on olemassa ja että outfile _ei_ ole
+        
+        final String infile = args[0]; 
+//        final String outfile = args[1];
+        final String outfile = "/Users/elmerfudd/Documents/out.ppm";
+        
         Runtime r = Runtime.getRuntime();
-        int ap = r.availableProcessors();
+        final int ap = r.availableProcessors();
         System.out.println("VM reports "+ap+" available processors");
         
-        BufferedReader br = new BufferedReader(new FileReader(filename));
-        PpmImageParser pip = new PpmImageParser(br);
-        System.out.println(pip.toString());
         
-        int[] kuva = pip.getPpmImageData();
-
-        endTime = System.nanoTime();
-        long readTime = (endTime - startTime)/1000000;
-        System.out.println("read time (ms): " + readTime);
+        PpmImage kuva = readImageAndReportTime(infile);
+        
+        writeImageAndReportTime(kuva, outfile);
+        
+        
     }
      
     
@@ -93,6 +96,41 @@ public class ImageProcessingMain {
         return Bitop.makePixel(r, g, b);
         
     }
+ 
+    private static void showUsage() {
+        System.err.println("Käyttö: java ImageProcessingMain /polku/ppm-tiedostoon");
+    }
     
+    private static PpmImage readImageAndReportTime(String filename) {
+        final long ReadEndTime;
+        final long ReadStartTime;
+        ReadStartTime = System.nanoTime();
+        
+        PpmImageParser pip = new PpmImageParser(new File(filename));
+        System.out.println(pip.toString());
+        
+        PpmImage kuva = pip.readPpmImage();
 
+        ReadEndTime = System.nanoTime();
+        long readTime = (ReadEndTime - ReadStartTime)/1000000;
+        System.out.println("Read time (ms): " + readTime);
+        
+        return kuva;
+    }
+
+    private static void writeImageAndReportTime(PpmImage image, String filename) {
+        final long WriteEndTime;
+        final long WriteStartTime;
+        WriteStartTime = System.nanoTime();
+        
+        PpmImageParser pip = new PpmImageParser(image);
+        System.out.println(pip.toString());
+        File outfile = new File(filename);
+        
+        pip.writePpmImage(outfile);
+
+        WriteEndTime = System.nanoTime();
+        long writeTime = (WriteEndTime - WriteStartTime)/1000000;
+        System.out.println("Write time (ms): " + writeTime);
+    }
 }

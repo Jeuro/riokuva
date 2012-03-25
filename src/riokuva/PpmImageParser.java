@@ -1,27 +1,32 @@
 
 package riokuva;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class PpmImageParser {
     
-        private BufferedReader br;
-        private static int width, height, maxcolours;
-        private static int[] image;
-        
-        PpmImageParser(BufferedReader passedBufferedReader) {
-            this.br = passedBufferedReader;
-            parsePpmHeader();
-        }
-        
-        PpmImageParser(File passedFile) {
-            this.br = openBufferedReaderForFile(passedFile);
-        }
+    private BufferedReader br;
+    private PrintWriter pw;
+    private static int width, height, maxcolours;
+    private PpmImage image;
+
+    PpmImageParser(BufferedReader passedBufferedReader) {
+        this.br = passedBufferedReader;
+        readPpmHeader();
+    }
+
+    PpmImageParser(File passedFile) {
+        this.br = openBufferedReaderForFile(passedFile);
+        readPpmHeader();
+    }
+    
+    PpmImageParser(PpmImage passedImage) {
+        this.image = passedImage;
+    }
         
     public int getWidth() {
         return width;
@@ -35,9 +40,13 @@ public class PpmImageParser {
         return maxcolours;
     }
     
-    public int[] getPpmImageData() {
-        parsePpmData();
+    public PpmImage readPpmImage() {
+        readPpmData();
         return image;
+    }
+    public void writePpmImage(File passedFile) {
+        this.pw = openPrintWriterForImage(passedFile);
+        writePpmData();
     }
     
     @Override
@@ -47,36 +56,42 @@ public class PpmImageParser {
                 +", maxcolours: "+this.getMaxcolours();
     }
     
-        private BufferedReader openBufferedReaderForFile(File file) {
-        try {
-            BufferedReader newBr = new BufferedReader(new FileReader(file));
-            return newBr;
-        } catch(IOException e) {
-            System.err.println(e);
+    private BufferedReader openBufferedReaderForFile(File passedFile) {
+        BufferedReader newBr = null;
+        try {        
+            newBr = new BufferedReader(new FileReader(passedFile), 16 * 1024 * 1024);
+        } catch(IOException ex) {
+            Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);   
         }
         
-        return null;
+        return newBr;
     }
     
-    private void parsePpmHeader() {
+    private void readPpmHeader() {
        int headerTemp;
      
        try {
-            if(!br.readLine().equalsIgnoreCase("P3")) 
+           StreamTokenizer tok = new StreamTokenizer(br);
+            tok.parseNumbers();
+            
+            tok.nextToken();
+            if(!tok.sval.equalsIgnoreCase("P3")) 
                 throw new IOException("Väärä magic number, osataan vain ASCII PPM (P3)");
             
-            StringTokenizer t = new StringTokenizer(br.readLine());            
-            headerTemp = Integer.parseInt(t.nextToken());
+            tok.nextToken();            
+            headerTemp = (int)(tok.nval);
             if(headerTemp > 0) { 
                 width = headerTemp;
             } else throw new IOException("Leveysarvo on negatiivinen!");
             
-            headerTemp = Integer.parseInt(t.nextToken());
+            tok.nextToken();            
+            headerTemp = (int)(tok.nval);
             if(headerTemp > 0) { 
                 height = headerTemp;
             } else throw new IOException("Korkeusarvo on negatiivinen!");
             
-            headerTemp = Integer.parseInt(br.readLine());
+            tok.nextToken();            
+            headerTemp = (int)(tok.nval);
             if(headerTemp > 0) { 
                 maxcolours = headerTemp;
             } else throw new IOException("Maxcolours on negatiivinen!");
@@ -87,25 +102,79 @@ public class PpmImageParser {
         }
     }
     
-    private void parsePpmData() {
+    private void readPpmData() {
         String s;  
-        int j = 0;
-        image = new int[width*height*3];
+        int x;
+        int y;
+        int r,g,b;
+        image = new PpmImage(width, height);
         
         try {
-            while((s = br.readLine()) != null) {
-                StringTokenizer tok = new StringTokenizer(s);
-                while(tok.hasMoreTokens()) {
-                    image[j++] = Integer.parseInt(tok.nextToken());
+            
+            StreamTokenizer tok = new StreamTokenizer(br);
+            tok.parseNumbers();
+            
+            for(y = 0; y < height; y++) {
+                for(x = 0; x < width; x++) {
+                    tok.nextToken();    
+                        r = (int)(tok.nval);
+                    tok.nextToken();    
+                        g = (int)(tok.nval);
+                    tok.nextToken();    
+                        b = (int)(tok.nval);
+                    
+                    image.setRGB(x, y, Bitop.makePixel(r, g, b));
+                    }
                 }
-            }
-                } catch (IOException e) {
+             
+            br.close();
+            
+    } catch (IOException e) {
                     System.err.println(e);
+                } 
+        
+    }
+
+    private PrintWriter openPrintWriterForImage(File passedFile) {
+        PrintWriter newPw = null;
+        try {
+            newPw = new PrintWriter(new FileWriter(new File("/Users/elmerfudd/Documents/out.ppm")));
+      //      newPw = new PrintWriter(System.out, true);
+        } catch (IOException ex) {
+            Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+
+        return newPw;
+    }
+  
+    private void writePpmData() {
+        int x, y;
+        int r,g,b;
+        
+        writePpmHeader();
+       
+        for(y = 0; y < height; y++) {
+            for(x = 0; x < width; x++) {
+                pw.print(Bitop.getR(image.getRGB(x, y)));
+                pw.print(" ");
+                
+                pw.print(Bitop.getG(image.getRGB(x, y)));
+                pw.print(" ");
+                
+                pw.print(Bitop.getB(image.getRGB(x, y)));
+                if (x == width -1) { 
+                    pw.print("\n");
+                } else pw.print(" ");
             }
+        }
+        pw.flush();
+        pw.close();
     }
     
-    private static void concParsePpmData(BufferedReader br) {
-        
+    private void writePpmHeader() {
+        pw.println("P3");
+        pw.println(""+width+" "+height);
+        pw.println(""+maxcolours);
     }
     
 }
