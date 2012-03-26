@@ -14,24 +14,20 @@ import java.io.IOException;
  * @author Jussi Kirjavainen
  */
 public class ImageProcessingMain {
-            
+    
     public static void main(String[] args) throws IOException {
-        
-        if (args.length != 2) {
-            showUsage();
-            System.exit(1);
-        }
-        // TODO testaa että infile on olemassa ja että outfile _ei_ ole
-        
+        checkArgs(args);
+           
         final String infile = args[0]; 
-//        final String outfile = args[1];
-        final String outfile = "/Users/elmerfudd/Documents/out.ppm";
+        final String outfile = args[1];
         
+        checkInfileExists(infile);
+        checkOutfileDoesNotExist(outfile);
+               
         Runtime r = Runtime.getRuntime();
         final int ap = r.availableProcessors();
         System.out.println("VM reports "+ap+" available processors");
-        
-        
+         
         PpmImage kuva = readImageAndReportTime(infile);
         
         writeImageAndReportTime(kuva, outfile);
@@ -132,5 +128,25 @@ public class ImageProcessingMain {
         WriteEndTime = System.nanoTime();
         long writeTime = (WriteEndTime - WriteStartTime)/1000000;
         System.out.println("Write time (ms): " + writeTime);
+    }
+    
+    private static void checkArgs(String[] args) {
+        if (args.length != 2) {
+            showUsage();
+            System.exit(1);
+        }
+    }
+    private static void checkInfileExists(String infile) {
+        if(!new File(infile).exists()) {
+            System.err.println("Syötetiedostoa ei ole olemassa!");
+            System.exit(2);
+        }
+    }
+
+    private static void checkOutfileDoesNotExist(String outfile) {
+         if(new File(outfile).exists()) {
+            System.err.println("Kohdetiedosto on jo olemassa!");
+            System.exit(2);
+        }
     }
 }

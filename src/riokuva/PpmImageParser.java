@@ -138,8 +138,7 @@ public class PpmImageParser {
     private PrintWriter openPrintWriterForImage(File passedFile) {
         PrintWriter newPw = null;
         try {
-            newPw = new PrintWriter(new FileWriter(new File("/Users/elmerfudd/Documents/out.ppm")));
-      //      newPw = new PrintWriter(System.out, true);
+            newPw = new PrintWriter(new FileWriter(passedFile));
         } catch (IOException ex) {
             Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
         } 
