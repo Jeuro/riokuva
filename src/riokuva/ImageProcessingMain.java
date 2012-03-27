@@ -16,6 +16,7 @@ import java.io.IOException;
 public class ImageProcessingMain {
     
     public static void main(String[] args) throws IOException {
+        
         checkArgs(args);
            
         final String infile = args[0]; 
@@ -23,7 +24,7 @@ public class ImageProcessingMain {
         
         checkInfileExists(infile);
         checkOutfileDoesNotExist(outfile);
-               
+         
         Runtime r = Runtime.getRuntime();
         final int ap = r.availableProcessors();
         System.out.println("VM reports "+ap+" available processors");

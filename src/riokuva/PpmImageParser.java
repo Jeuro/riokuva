@@ -26,6 +26,9 @@ public class PpmImageParser {
     
     PpmImageParser(PpmImage passedImage) {
         this.image = passedImage;
+        this.width = image.getWidth();
+        this.height = image.getHeight();
+        this.maxcolours = image.getMaxcolours();
     }
         
     public int getWidth() {
