@@ -13,7 +13,7 @@ public class PpmImage implements PixelImage {
     private int[][] image;
     private int width, height, maxcolours;
     
-    PpmImage(int newWidth, int newHeight)  {
+    public PpmImage(int newWidth, int newHeight)  {
         assertDimensionsArePositive(newWidth, newHeight);
         this.image = new int[newWidth][newHeight];
         this.width = newWidth;
