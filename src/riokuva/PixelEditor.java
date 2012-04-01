@@ -1,7 +1,6 @@
 package riokuva;
 
 public class PixelEditor {
-    
     // Ei testattu vielä. Palauttaa terävoitetyn pikselin integerinä,
     // kutsu for-loopissa esim. kirjoitettavaKuva.setRGB(sharpenPixel(luettavaKuva, i, j);
     public static int sharpenPixel(PixelImage kuva, int x, int y) {

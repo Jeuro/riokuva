@@ -24,67 +24,65 @@ import java.util.regex.Pattern;
  * @author elmerfudd
  */
 public class concreadtest extends Thread {
- 
     int height, width, maxcolours;
     int totalBytes, totalPixels;
-    Matcher matcher; 
+    Matcher matcher;
     CharBuffer charBuffer;
     int availableProcessors;
-    
+
     public concreadtest() {
-        
     }
-    
+
     public PpmImage concReadPpmImage(File in) throws IOException {
-    
+
         PpmImage image = null;
         try {
-        
+
             FileChannel fc = new RandomAccessFile(in, "r").getChannel();
             MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
             charBuffer = Charset.defaultCharset().newDecoder().decode(mbb);
-            System.out.println("Charbuffer: "+charBuffer.length());
+            System.out.println("Charbuffer: " + charBuffer.length());
             Pattern nonWhitespace = Pattern.compile("\\S+");
             matcher = nonWhitespace.matcher(charBuffer);
             readHeader(matcher);
 
-            System.out.println(""+width+" "+height+" "+maxcolours);
+            System.out.println("" + width + " " + height + " " + maxcolours);
             int values = 0;
             int headerOffset = matcher.end();
             int dataBegin;
             int dataEnd;
-            
+
             Runtime rt = Runtime.getRuntime();
             availableProcessors = rt.availableProcessors();
-            
-            int dataBytes = charBuffer.length()-headerOffset;
+
+            int dataBytes = charBuffer.length() - headerOffset;
             int chunkSize = dataBytes / availableProcessors;
-            
+
             totalPixels = width * height;
             int startPixel;
             int endPixel;
             int pixelsPerChunk = totalPixels / availableProcessors;
-            
-            image = new PpmImage(width,height);
-        
+
+            image = new PpmImage(width, height);
+
             List<PpmReadWorker> workers = new ArrayList<PpmReadWorker>();
-            
+
             for (int p = 0; p < availableProcessors; p++) {
                 dataBegin = p * chunkSize + headerOffset;
-                dataEnd = (p+1) * chunkSize + headerOffset;
+                dataEnd = (p + 1) * chunkSize + headerOffset;
                 startPixel = p * pixelsPerChunk;
-                endPixel = (p+1) * pixelsPerChunk;
-                        
+                endPixel = (p + 1) * pixelsPerChunk;
+
                 PpmReadWorker currentWorker = new PpmReadWorker(
-                        image, 
-                        charBuffer, 
+                        image,
+                        charBuffer,
                         startPixel,
-                        endPixel, 
+                        endPixel,
                         dataBegin,
                         dataEnd);
-                
+
                 workers.add(currentWorker);
-                currentWorker.start();     
+                currentWorker.start();
             }
             // odotetaan että säikeet lopettaa
             for (PpmReadWorker currentWorker : workers) {
@@ -94,7 +92,7 @@ public class concreadtest extends Thread {
                     Logger.getLogger(concreadtest.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-             
+
         } catch (FileNotFoundException ex) {
             Logger.getLogger(concreadtest.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -102,7 +100,7 @@ public class concreadtest extends Thread {
         return image;
 
     }
-    
+
     public static void main(String[] args) throws IOException {
         long starttime = System.nanoTime();
         File in = new File("../../Dropbox/RIO/7976x4480.ppm");
@@ -110,14 +108,14 @@ public class concreadtest extends Thread {
         concreadtest crt = new concreadtest();
         PpmImage image = crt.concReadPpmImage(in);
         long endtime = System.nanoTime();
-        System.out.println("Read time: "+(endtime-starttime)/1000000);
+        System.out.println("Read time: " + (endtime - starttime) / 1000000);
         PpmImageParser pip = new PpmImageParser(image);
-                System.out.println(pip.toString());
+        System.out.println(pip.toString());
 
         pip.writePpmImage(out);
-        
+
     }
-    
+
     private void readHeader(Matcher matcher) {
         matcher.find();
         matcher.find();

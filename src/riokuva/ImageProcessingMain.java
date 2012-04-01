@@ -29,6 +29,17 @@ public class ImageProcessingMain {
         System.out.println("VM reports " + ap + " available processors");
 
         PpmImage kuva = readImageAndReportTime(infile);
+        PpmImage kuva2 = new PpmImage(kuva.getWidth(), kuva.getHeight());
+
+        ImageEditor e = new ImageEditor(ap);
+
+        e.blur(kuva, kuva2);
+        e.blur(kuva2, kuva);
+        e.blur(kuva, kuva2);
+
+        e.sharpen(kuva2, kuva);
+        e.sharpen(kuva, kuva2);
+        e.sharpen(kuva2, kuva);
 
         writeImageAndReportTime(kuva, outfile);
     }
