@@ -18,19 +18,17 @@ public class PpmReadWorker extends Thread {
     CharBuffer charBuffer;
     int startPixel, endPixel;
     int width, height;
-    
     int firstX, firstY, lastX, lastY;
-    /* nonWhitespace.matcher(
-                            charBuffer.subSequence(
-                                        dataBegin, 
-                                        dataEnd)
-                      ) */
-    public PpmReadWorker(PpmImage image, 
-                        CharBuffer charBuffer, 
-                        int startPixel, 
-                        int endPixel, 
-                        int dataBegin,
-                        int dataEnd) {
+    /*
+     * nonWhitespace.matcher( charBuffer.subSequence( dataBegin, dataEnd) )
+     */
+
+    public PpmReadWorker(PpmImage image,
+            CharBuffer charBuffer,
+            int startPixel,
+            int endPixel,
+            int dataBegin,
+            int dataEnd) {
         this.startPixel = startPixel;
         this.endPixel = endPixel;
         Pattern nonWhitespace = Pattern.compile("\\S+");
@@ -39,36 +37,36 @@ public class PpmReadWorker extends Thread {
         this.width = image.getWidth();
         this.height = image.getHeight();
         this.charBuffer = charBuffer;
-        
+
         calculateCoordinates();
     }
-    
+
     @Override
     public void run() {
         int x = firstX;
         int y = firstY;
-        int r,g,b, temp;
-        while(x <= lastX || y <= lastY) {
+        int r, g, b, temp;
+        while (x <= lastX || y <= lastY) {
             temp = 0;
-            
-            if(matcher.find()) { 
+
+            if (matcher.find()) {
                 temp = Integer.parseInt(matcher.group());
             }
             r = temp;
 
-            if(matcher.find()) { 
+            if (matcher.find()) {
                 temp = Integer.parseInt(matcher.group());
             }
             g = temp;
-            
-            if(matcher.find()) { 
+
+            if (matcher.find()) {
                 b = Integer.parseInt(matcher.group());
-                
+
                 image.setRGB(x, y, Bitop.makePixel(r, g, b));
-            } 
+            }
 
             x++;
-            if(x == width) {
+            if (x == width) {
                 x = 0;
                 y++;
             }
