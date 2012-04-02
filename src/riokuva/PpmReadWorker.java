@@ -19,9 +19,6 @@ public class PpmReadWorker extends Thread {
     int startPixel, endPixel;
     int width, height;
     int firstX, firstY, lastX, lastY;
-    /*
-     * nonWhitespace.matcher( charBuffer.subSequence( dataBegin, dataEnd) )
-     */
 
     public PpmReadWorker(PpmImage image,
             CharBuffer charBuffer,

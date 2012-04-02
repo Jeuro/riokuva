@@ -14,6 +14,8 @@ import java.io.IOException;
  * @author Jussi Kirjavainen
  */
 public class ImageProcessingMain {
+    private static int availableProcessors;
+
     public static void main(String[] args) throws IOException {
 
         checkArgs(args);
@@ -25,13 +27,49 @@ public class ImageProcessingMain {
         checkOutfileDoesNotExist(outfile);
 
         Runtime r = Runtime.getRuntime();
-        final int ap = r.availableProcessors();
-        System.out.println("VM reports " + ap + " available processors");
+        availableProcessors = r.availableProcessors();
+        System.out.println("VM reports " + availableProcessors + " available processors");
 
-        PpmImage kuva = readImageAndReportTime(infile);
+        PpmImage kuva = readImageAndReportTime(infile, true); // True = rinnakkain
+        
+        kuva = processImageAndReportTime(kuva);
+        
+        writeImageAndReportTime(kuva, outfile);
+    }
+
+    private static void showUsage() {
+        System.err.println("Usage: java -jar -Xmx1500m ImageProcessingMain infile outfile");
+    }
+
+    private static PpmImage readImageAndReportTime(String filename, boolean concurrently) {
+        final long ReadEndTime;
+        final long ReadStartTime;
+        PpmImage kuva;
+        System.out.println("Reading image...");
+        ReadStartTime = System.nanoTime();
+
+        PpmImageParser pip = new PpmImageParser(new File(filename));
+
+        if (concurrently) {
+            kuva = pip.concReadPpmImage();
+        } else {
+            kuva = pip.readPpmImage();
+        }
+        ReadEndTime = System.nanoTime();
+        long readTime = (ReadEndTime - ReadStartTime) / 1000000;
+        System.out.println("Read time (ms): " + readTime);
+
+        return kuva;
+    }
+
+    private static PpmImage processImageAndReportTime(PpmImage kuva) {
+        final long ReadEndTime;
+        final long ReadStartTime;
+        System.out.println("Now processing image...");
+        ReadStartTime = System.nanoTime();
         PpmImage kuva2 = new PpmImage(kuva.getWidth(), kuva.getHeight());
 
-        ImageEditor e = new ImageEditor(ap);
+        ImageEditor e = new ImageEditor(availableProcessors);
 
         e.blur(kuva, kuva2);
         e.blur(kuva2, kuva);
@@ -40,27 +78,10 @@ public class ImageProcessingMain {
         e.sharpen(kuva2, kuva);
         e.sharpen(kuva, kuva2);
         e.sharpen(kuva2, kuva);
-
-        writeImageAndReportTime(kuva, outfile);
-    }
-
-    private static void showUsage() {
-        System.err.println("Käyttö: java ImageProcessingMain /polku/ppm-tiedostoon");
-    }
-
-    private static PpmImage readImageAndReportTime(String filename) {
-        final long ReadEndTime;
-        final long ReadStartTime;
-        ReadStartTime = System.nanoTime();
-
-        PpmImageParser pip = new PpmImageParser(new File(filename));
-        System.out.println(pip.toString());
-
-        PpmImage kuva = pip.readPpmImage();
-
+       
         ReadEndTime = System.nanoTime();
         long readTime = (ReadEndTime - ReadStartTime) / 1000000;
-        System.out.println("Read time (ms): " + readTime);
+        System.out.println("Processing time (ms): " + readTime);
 
         return kuva;
     }
@@ -68,6 +89,7 @@ public class ImageProcessingMain {
     private static void writeImageAndReportTime(PpmImage image, String filename) {
         final long WriteEndTime;
         final long WriteStartTime;
+        System.out.println("Writing image...");
         WriteStartTime = System.nanoTime();
 
         PpmImageParser pip = new PpmImageParser(image);
@@ -90,7 +112,7 @@ public class ImageProcessingMain {
 
     private static void checkInfileExists(String infile) {
         if (!new File(infile).exists()) {
-            System.err.println("Syötetiedostoa ei ole olemassa!");
+            System.err.println("Lähdetiedostoa ei ole olemassa!");
             System.exit(2);
         }
     }

@@ -18,12 +18,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.DataFormatException;
 
 /**
  *
  * @author elmerfudd
  */
 public class concreadtest extends Thread {
+
     int height, width, maxcolours;
     int totalBytes, totalPixels;
     Matcher matcher;
@@ -42,8 +44,8 @@ public class concreadtest extends Thread {
             MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
             charBuffer = Charset.defaultCharset().newDecoder().decode(mbb);
             System.out.println("Charbuffer: " + charBuffer.length());
-            Pattern nonWhitespace = Pattern.compile("\\S+");
-            matcher = nonWhitespace.matcher(charBuffer);
+            Pattern nonWhitespaceOrCommentOrNewline = Pattern.compile("\\S+|(#.*$)|\\n");
+            matcher = nonWhitespaceOrCommentOrNewline.matcher(charBuffer);
             readHeader(matcher);
 
             System.out.println("" + width + " " + height + " " + maxcolours);
@@ -103,7 +105,7 @@ public class concreadtest extends Thread {
 
     public static void main(String[] args) throws IOException {
         long starttime = System.nanoTime();
-        File in = new File("../../Dropbox/RIO/7976x4480.ppm");
+        File in = new File("7976x4480.ppm");
         File out = new File("out.ppm");
         concreadtest crt = new concreadtest();
         PpmImage image = crt.concReadPpmImage(in);
@@ -117,12 +119,46 @@ public class concreadtest extends Thread {
     }
 
     private void readHeader(Matcher matcher) {
+
+        skipComments(matcher);
+
+        if (matcher.group().equalsIgnoreCase("P3")) {
+            skipComments(matcher);
+
+        } else {
+            System.err.println("Not P3! ... continuing anyway");
+        }
+
+        System.err.println("width? " + matcher.group());
+        if (Integer.parseInt(matcher.group()) > 0) {
+            width = Integer.parseInt(matcher.group());
+        }
+
+        skipComments(matcher);
+
+        System.err.println("height? " + matcher.group());
+        if (Integer.parseInt(matcher.group()) > 0) {
+            height = Integer.parseInt(matcher.group());
+        }
+        
+        skipComments(matcher);
+
+        System.err.println("maxcolours? " + matcher.group());
+        if (Integer.parseInt(matcher.group()) > 0) {
+            maxcolours = Integer.parseInt(matcher.group());
+        }
+
+
+    }
+
+    private void skipComments(Matcher matcher) {
         matcher.find();
-        matcher.find();
-        width = Integer.parseInt(matcher.group());
-        matcher.find();
-        height = Integer.parseInt(matcher.group());
-        matcher.find();
-        maxcolours = Integer.parseInt(matcher.group());
+        while (matcher.group().startsWith("#")
+                || matcher.group().startsWith("\n")) {
+            while (!matcher.group().startsWith("\n")) {
+                matcher.find();
+            }
+            matcher.find();
+        }
     }
 }
