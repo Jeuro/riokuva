@@ -30,7 +30,7 @@ public class ImageProcessingMain {
         availableProcessors = r.availableProcessors();
         System.out.println("VM reports " + availableProcessors + " available processors");
 
-        PpmImage kuva = readImageAndReportTime(infile, true); // True = rinnakkain
+        PpmImage kuva = readImageAndReportTime(infile);
         
         kuva = processImageAndReportTime(kuva);
         
@@ -41,7 +41,7 @@ public class ImageProcessingMain {
         System.err.println("Usage: java -jar -Xmx1500m ImageProcessingMain infile outfile");
     }
 
-    private static PpmImage readImageAndReportTime(String filename, boolean concurrently) {
+    private static PpmImage readImageAndReportTime(String filename) {
         final long ReadEndTime;
         final long ReadStartTime;
         PpmImage kuva;
@@ -49,12 +49,7 @@ public class ImageProcessingMain {
         ReadStartTime = System.nanoTime();
 
         PpmImageParser pip = new PpmImageParser(new File(filename));
-
-        if (concurrently) {
-            kuva = pip.concReadPpmImage();
-        } else {
-            kuva = pip.readPpmImage();
-        }
+        kuva = pip.concReadPpmImage();
         ReadEndTime = System.nanoTime();
         long readTime = (ReadEndTime - ReadStartTime) / 1000000;
         System.out.println("Read time (ms): " + readTime);
