@@ -1,18 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package riokuva;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 
-/**
- *
- * @author Jussi Kirjavainen
- */
 public class ImageProcessingMain {
     private static int availableProcessors;
 
@@ -49,7 +39,7 @@ public class ImageProcessingMain {
         ReadStartTime = System.nanoTime();
 
         PpmImageParser pip = new PpmImageParser(new File(filename));
-        kuva = pip.concReadPpmImage();
+        kuva = pip.readPpmImage();
         ReadEndTime = System.nanoTime();
         long readTime = (ReadEndTime - ReadStartTime) / 1000000;
         System.out.println("Read time (ms): " + readTime);

@@ -1,51 +1,19 @@
 package riokuva;
 
 import java.io.*;
-import java.nio.CharBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PpmImageParser {
 
+    private BufferedReader br;
     private PrintWriter pw;
     private int width, height, maxcolours;
     private PpmImage image;
-    Matcher matcher;
-    CharBuffer charBuffer;
-    int availableProcessors;
 
     PpmImageParser(File passedFile) {
-        Runtime rt = Runtime.getRuntime();
-        availableProcessors = rt.availableProcessors();
-        FileChannel fc = null;
-        try {
-            fc = new RandomAccessFile(passedFile, "r").getChannel();
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        MappedByteBuffer mbb = null;
-        try {
-            mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-        } catch (IOException ex) {
-            Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        try {
-            charBuffer = Charset.defaultCharset().newDecoder().decode(mbb);
-        } catch (CharacterCodingException ex) {
-            Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        Pattern nonWhitespaceOrCommentOrNewline = Pattern.compile("\\S+|(#.*$)|\\n");
-        matcher = nonWhitespaceOrCommentOrNewline.matcher(charBuffer);
-        readHeader(matcher);
+        this.br = openBufferedReaderForFile(passedFile);
+        readPpmHeader();
     }
 
     PpmImageParser(PpmImage passedImage) {
@@ -67,6 +35,11 @@ public class PpmImageParser {
         return maxcolours;
     }
 
+    public PpmImage readPpmImage() {
+        readPpmData();
+        return image;
+    }
+
     public void writePpmImage(File passedFile) {
         this.pw = openPrintWriterForImage(passedFile);
         writePpmData();
@@ -79,90 +52,92 @@ public class PpmImageParser {
                 + ", maxcolours: " + this.getMaxcolours();
     }
 
-    // Uusi versio headerin lukijasta, ottaa huomioon kommentit ja toimii rinnakkaisen
-    // lukijan kanssa.
-    private void readHeader(Matcher matcher) {
+    private void readPpmHeader() {
+        int headerTemp;
 
-        skipComments(matcher);
+        try {
+            StreamTokenizer tok = new StreamTokenizer(br);
+            tok.parseNumbers();
+            tok.commentChar(35); // ASCII 35 = '#'
 
-        if (matcher.group().equalsIgnoreCase("P3")) {
-            skipComments(matcher);
-
-        } else {
-            System.err.println("Not P3! ... continuing anyway");
-        }
-
-        if (Integer.parseInt(matcher.group()) > 0) {
-            width = Integer.parseInt(matcher.group());
-        }
-
-        skipComments(matcher);
-
-        if (Integer.parseInt(matcher.group()) > 0) {
-            height = Integer.parseInt(matcher.group());
-        }
-
-        skipComments(matcher);
-
-        if (Integer.parseInt(matcher.group()) > 0) {
-            maxcolours = Integer.parseInt(matcher.group());
-        }
-    }
-
-    private void skipComments(Matcher matcher) {
-        matcher.find();
-        while (matcher.group().startsWith("#")
-                || matcher.group().startsWith("\n")) {
-            while (!matcher.group().startsWith("\n")) {
-                matcher.find();
+            tok.nextToken();
+            if (!tok.sval.equalsIgnoreCase("P3")) {
+                throw new IOException("Väärä magic number, osataan vain ASCII PPM (P3)");
             }
-            matcher.find();
+
+            tok.nextToken();
+            headerTemp = (int) (tok.nval);
+            if (headerTemp > 0) {
+                width = headerTemp;
+            } else {
+                throw new IOException("Leveysarvo on negatiivinen!");
+            }
+
+            tok.nextToken();
+            headerTemp = (int) (tok.nval);
+            if (headerTemp > 0) {
+                height = headerTemp;
+            } else {
+                throw new IOException("Korkeusarvo on negatiivinen!");
+            }
+
+            tok.nextToken();
+            headerTemp = (int) (tok.nval);
+            if (headerTemp > 0) {
+                maxcolours = headerTemp;
+            } else {
+                throw new IOException("Maxcolours on negatiivinen!");
+            }
+
+        } catch (IOException e) {
+            System.err.println(e);
         }
     }
 
-    public PpmImage concReadPpmImage() {
+    private BufferedReader openBufferedReaderForFile(File passedFile) {
+        BufferedReader newBr = null;
+        try {
+            newBr = new BufferedReader(new FileReader(passedFile), 64 * 1024 * 1024);
+        } catch (IOException ex) {
+            Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-        int headerOffset = matcher.end();
-        int dataBegin;
-        int dataEnd;
-        int dataBytes = charBuffer.length() - headerOffset;
-        int chunkSize = dataBytes / availableProcessors;
+        return newBr;
+    }
 
-        int totalPixels = width * height;
-        int startPixel;
-        int endPixel;
-        int pixelsPerChunk = totalPixels / availableProcessors;
-
+    private void readPpmData() {
+        String s;
+        int x;
+        int y;
+        int r, g, b;
         image = new PpmImage(width, height);
 
-        List<PpmReadWorker> workers = new ArrayList<PpmReadWorker>();
+        try {
 
-        for (int p = 0; p < availableProcessors; p++) {
-            dataBegin = p * chunkSize + headerOffset;
-            dataEnd = (p + 1) * chunkSize + headerOffset;
-            startPixel = p * pixelsPerChunk;
-            endPixel = (p + 1) * pixelsPerChunk;
+            StreamTokenizer tok = new StreamTokenizer(br);
+            tok.parseNumbers();
+            tok.commentChar(35); // ASCII 35 = '#'
 
-            PpmReadWorker currentWorker = new PpmReadWorker(
-                    image,
-                    charBuffer,
-                    startPixel,
-                    endPixel,
-                    dataBegin,
-                    dataEnd);
 
-            workers.add(currentWorker);
-            currentWorker.start();
-        }
-        // odotetaan että säikeet lopettaa
-        for (PpmReadWorker currentWorker : workers) {
-            try {
-                currentWorker.join();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(concreadtest.class.getName()).log(Level.SEVERE, null, ex);
+            for (y = 0; y < height; y++) {
+                for (x = 0; x < width; x++) {
+                    tok.nextToken();
+                    r = (int) (tok.nval);
+                    tok.nextToken();
+                    g = (int) (tok.nval);
+                    tok.nextToken();
+                    b = (int) (tok.nval);
+
+                    image.setRGB(x, y, Bitop.makePixel(r, g, b));
+                }
             }
+
+            br.close();
+
+        } catch (IOException e) {
+            System.err.println(e);
         }
-        return image;
+
     }
 
     private PrintWriter openPrintWriterForImage(File passedFile) {
