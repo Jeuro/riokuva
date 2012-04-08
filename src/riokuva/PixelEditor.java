@@ -1,8 +1,11 @@
 package riokuva;
 
 public class PixelEditor {
-    // Ei testattu vielä. Palauttaa terävoitetyn pikselin integerinä,
-    // kutsu for-loopissa esim. kirjoitettavaKuva.setRGB(sharpenPixel(luettavaKuva, i, j);
+    
+    
+    // Palauttaa terävöitetyn kuvan. Kaava on susi, joten
+    // palauttaa lähes aina mustaa
+    
     public static int sharpenPixel(PixelImage kuva, int x, int y) {
         //hae kuvasta sharpenPixel kohde ja sen naapurit
         int keski = kuva.getRGB(x, y);
@@ -37,11 +40,8 @@ public class PixelEditor {
 
     }
 
-    // Alla olevat metodit siirretään samaan luokkaan,
-    // jossa sijaitsee for-looppi joka käy kuvan läpi
-    // blurraten tai sharpentaen. Väliaikaisesti tässä.
-    // Ei testattu vielä. Palauttaa blurratun pikselin integerinä,
-    // kutsu for-loopissa esim. kirjoitettavaKuva.setRGB(blurPixel(luettavaKuva, i, j);
+        // Palauttaa blurratun pikselin
+    
     public static int blurPixel(PixelImage luettavaKuva, int x, int y) {
         //hae kuvasta blurPixel kohde ja sen naapurit
         int keski = luettavaKuva.getRGB(x, y);

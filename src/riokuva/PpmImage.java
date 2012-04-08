@@ -1,15 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package riokuva;
 
 import java.lang.IllegalArgumentException;
 
-/**
- *
- * @author Jussi Kirjavainen
- */
 public class PpmImage implements PixelImage {
     private int[][] image;
     private int width, height, maxcolours;
@@ -57,4 +50,5 @@ public class PpmImage implements PixelImage {
             throw new IllegalArgumentException("Pixel coordinates are out of image bounds");
         }
     }
+
 }
