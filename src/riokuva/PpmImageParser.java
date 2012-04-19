@@ -11,11 +11,13 @@ public class PpmImageParser {
     private int width, height, maxcolours;
     private PpmImage image;
 
+    // konstruktori tiedostossa olevalle kuvalle, eli kuvan lukemiseen
     PpmImageParser(File passedFile) {
         this.br = openBufferedReaderForFile(passedFile);
+        // luetaan header heti konstruktorissa, että saadaan kuvan koko
         readPpmHeader();
     }
-
+    // konstruktori muistissa olevalle kuvalle, eli kuvan kirjoittamiseen
     PpmImageParser(PpmImage passedImage) {
         this.image = passedImage;
         this.width = image.getWidth();
@@ -42,7 +44,7 @@ public class PpmImageParser {
 
     public void writePpmImage(File passedFile) {
         this.pw = openPrintWriterForImage(passedFile);
-        writePpmData();
+        writePpm();
     }
 
     @Override
@@ -56,10 +58,13 @@ public class PpmImageParser {
         int headerTemp;
 
         try {
+            // alustetaan uusi merkkijonon pilkkoja
             StreamTokenizer tok = new StreamTokenizer(br);
             tok.parseNumbers();
-            tok.commentChar(35); // ASCII 35 = '#'
+            // ASCII 35 = '#' -- aloittaa PPM-formaatissa kommenttirivit:
+            tok.commentChar(35); 
 
+            // seuraavissa luetaan headerin arvot yksi kerrallaan
             tok.nextToken();
             if (!tok.sval.equalsIgnoreCase("P3")) {
                 throw new IOException("Väärä magic number, osataan vain ASCII PPM (P3)");
@@ -93,10 +98,11 @@ public class PpmImageParser {
             System.err.println(e);
         }
     }
-
+    // avataan puskuroitu merkkijonolukija kuvatiedostolle
     private BufferedReader openBufferedReaderForFile(File passedFile) {
         BufferedReader newBr = null;
         try {
+            // viimeinen argumentti on puskurin koko tavuina. Iso puskuri isoille kuville
             newBr = new BufferedReader(new FileReader(passedFile), 64 * 1024 * 1024);
         } catch (IOException ex) {
             Logger.getLogger(PpmImageParser.class.getName()).log(Level.SEVERE, null, ex);
@@ -113,12 +119,12 @@ public class PpmImageParser {
         image = new PpmImage(width, height);
 
         try {
-
+            // Alustetaan uusi pilkkoja
             StreamTokenizer tok = new StreamTokenizer(br);
             tok.parseNumbers();
             tok.commentChar(35); // ASCII 35 = '#'
 
-
+            // luetaan kuvan RGB-arvot suoraan pikselikoordinaatteihin (x, y)
             for (y = 0; y < height; y++) {
                 for (x = 0; x < width; x++) {
                     tok.nextToken();
@@ -127,7 +133,7 @@ public class PpmImageParser {
                     g = (int) (tok.nval);
                     tok.nextToken();
                     b = (int) (tok.nval);
-
+                    // tässä varsinaisesti kootaan yksi pikseli
                     image.setRGB(x, y, Bitop.makePixel(r, g, b));
                 }
             }
@@ -139,7 +145,8 @@ public class PpmImageParser {
         }
 
     }
-
+    // kuvan kirjoittaminen
+    // avataan ensin uusi PrintWriter, jolla voi kirjoittaa tiedostoon print-metodeilla
     private PrintWriter openPrintWriterForImage(File passedFile) {
         PrintWriter newPw = null;
         try {
@@ -151,12 +158,13 @@ public class PpmImageParser {
         return newPw;
     }
 
-    private void writePpmData() {
+    private void writePpm() {
         int x, y;
         int r, g, b;
-
+        
         writePpmHeader();
-
+        // varsinaisen kuvadatan kirjoitus: luetaan pikselidata (x,y)-koordinaateista
+        // ja puretaan ne RGB-osiin, jotka kirjoitetaan välilyönnillä erotettuina
         for (y = 0; y < height; y++) {
             for (x = 0; x < width; x++) {
                 pw.print(Bitop.getR(image.getRGB(x, y)));
@@ -164,7 +172,7 @@ public class PpmImageParser {
 
                 pw.print(Bitop.getG(image.getRGB(x, y)));
                 pw.print(" ");
-
+                
                 pw.print(Bitop.getB(image.getRGB(x, y)));
                 if (x == width - 1) {
                     pw.print("\n");
@@ -173,11 +181,14 @@ public class PpmImageParser {
                 }
             }
         }
+        // pidetään huolta, että puskuri on kirjoitettu levylle 
+        // ja suljetaan kirjoittaja
         pw.flush();
         pw.close();
     }
 
     private void writePpmHeader() {
+        // huomaa, että println tuottaa rivinvaihdot 
         pw.println("P3");
         pw.println("" + width + " " + height);
         pw.println("" + maxcolours);

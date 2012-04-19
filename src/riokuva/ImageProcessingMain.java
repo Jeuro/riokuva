@@ -5,21 +5,27 @@ import java.io.IOException;
 
 public class ImageProcessingMain {
     private static int availableProcessors;
-
+    private static int numberOfThreads;
     public static void main(String[] args) throws IOException {
-
         checkArgs(args);
-
-        final String infile = args[0];
-        final String outfile = args[1];
-
+        
+        Runtime r = Runtime.getRuntime();
+        availableProcessors = r.availableProcessors();        
+        if( Integer.parseInt(args[0]) == 0 ) {
+             numberOfThreads = availableProcessors;
+        } else {
+             numberOfThreads = Integer.parseInt(args[0]);
+        }
+        
+        final String infile = args[1];
+        final String outfile = args[2];
+        
         checkInfileExists(infile);
         checkOutfileDoesNotExist(outfile);
 
-        Runtime r = Runtime.getRuntime();
-        availableProcessors = r.availableProcessors();
         System.out.println("VM reports " + availableProcessors + " available processors");
-
+        System.out.println("Using " + numberOfThreads + " processing threads");
+        
         PpmImage kuva = readImageAndReportTime(infile);
         
         kuva = processImageAndReportTime(kuva);
@@ -28,7 +34,8 @@ public class ImageProcessingMain {
     }
 
     private static void showUsage() {
-        System.err.println("Usage: java -jar -Xmx1500m ImageProcessingMain infile outfile");
+        System.err.println("Usage: java -jar -Xmx1500m riokuva.jar n infile outfile");
+        System.err.println("First argument 'n' is number of threads to use; 0 uses number of available processors.");
     }
 
     private static PpmImage readImageAndReportTime(String filename) {
@@ -50,11 +57,11 @@ public class ImageProcessingMain {
     private static PpmImage processImageAndReportTime(PpmImage kuva) {
         final long ReadEndTime;
         final long ReadStartTime;
-        System.out.println("Now processing image...");
+        System.out.println("Processing image...");
         ReadStartTime = System.nanoTime();
         PpmImage kuva2 = new PpmImage(kuva.getWidth(), kuva.getHeight());
 
-        ImageEditor e = new ImageEditor(availableProcessors);
+        ImageEditor e = new ImageEditor(numberOfThreads);
 
         e.blur(kuva, kuva2);
         e.blur(kuva2, kuva);
@@ -89,7 +96,7 @@ public class ImageProcessingMain {
     }
 
     private static void checkArgs(String[] args) {
-        if (args.length != 2) {
+        if (args.length != 3 || Integer.parseInt(args[0]) < 0) {
             showUsage();
             System.exit(1);
         }
@@ -97,14 +104,14 @@ public class ImageProcessingMain {
 
     private static void checkInfileExists(String infile) {
         if (!new File(infile).exists()) {
-            System.err.println("Lähdetiedostoa ei ole olemassa!");
+            System.err.println("Lähdetiedostoa " + infile + " ei ole olemassa!");
             System.exit(2);
         }
     }
 
     private static void checkOutfileDoesNotExist(String outfile) {
         if (new File(outfile).exists()) {
-            System.err.println("Kohdetiedosto on jo olemassa!");
+            System.err.println("Kohdetiedosto " + outfile + " on jo olemassa!");
             System.exit(2);
         }
     }
