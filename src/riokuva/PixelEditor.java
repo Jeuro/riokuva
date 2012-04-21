@@ -1,11 +1,9 @@
 package riokuva;
 
-public class PixelEditor {
-    
+public class PixelEditor {   
     
     // Palauttaa terävöitetyn kuvan. Kaava on susi, joten
-    // palauttaa lähes aina mustaa
-    
+    // palauttaa lähes aina mustaa    
     public static int sharpenPixel(PixelImage kuva, int x, int y) {
         //hae kuvasta sharpenPixel kohde ja sen naapurit
         int keski = kuva.getRGB(x, y);
@@ -14,34 +12,16 @@ public class PixelEditor {
         int vasen = kuva.getRGB((x - 1), y);
         int oikea = kuva.getRGB((x + 1), y);
 
-        // Jokaiselle väriarvolle R, G, B sharpenPixel erikseen.
-
-        int r = (4 * Bitop.getR(keski) - Bitop.getR(yla) - Bitop.getR(ala)
-                - Bitop.getR(oikea) - Bitop.getR(vasen)) / 8;
-        int g = (4 * Bitop.getG(keski) - Bitop.getG(yla) - Bitop.getG(ala)
-                - Bitop.getG(oikea) - Bitop.getG(vasen)) / 8;
-        int b = (4 * Bitop.getB(keski) - Bitop.getB(yla) - Bitop.getB(ala)
-                - Bitop.getB(oikea) - Bitop.getB(vasen)) / 8;
-
-        // sharpenPixel vaatii varautumisen, että väriarvo tippuu alle nollan
-
-        if (r < 0) {
-            r = 0;
-        }
-        if (g < 0) {
-            g = 0;
-        }
-        if (b < 0) {
-            b = 0;
-        }
+        // Jokaiselle väriarvolle R, G, B sharpen erikseen.
+        int r = sharpen(Bitop.getR(keski), Bitop.getR(yla), Bitop.getR(ala), Bitop.getR(oikea), Bitop.getR(vasen));
+        int g = sharpen(Bitop.getG(keski),Bitop.getG(yla),Bitop.getG(ala), Bitop.getG(oikea), Bitop.getG(vasen));
+        int b = sharpen(Bitop.getB(keski),Bitop.getB(yla),Bitop.getB(ala), Bitop.getB(oikea), Bitop.getB(vasen));
 
         // palauta sharpenettu pikseli
         return Bitop.makePixel(r, g, b);
-
     }
 
-        // Palauttaa blurratun pikselin
-    
+    // Palauttaa blurratun pikselin    
     public static int blurPixel(PixelImage luettavaKuva, int x, int y) {
         //hae kuvasta blurPixel kohde ja sen naapurit
         int keski = luettavaKuva.getRGB(x, y);
@@ -50,16 +30,23 @@ public class PixelEditor {
         int vasen = luettavaKuva.getRGB((x - 1), y);
         int oikea = luettavaKuva.getRGB((x + 1), y);
 
-        //jokaiselle väriarvolle R, G, B blurPixel erikseen.
-        int r = (4 * Bitop.getR(keski) + Bitop.getR(yla) + Bitop.getR(ala)
-                + Bitop.getR(oikea) + Bitop.getR(vasen)) / 8;
-        int g = (4 * Bitop.getG(keski) + Bitop.getG(yla) + Bitop.getG(ala)
-                + Bitop.getG(oikea) + Bitop.getG(vasen)) / 8;
-        int b = (4 * Bitop.getB(keski) + Bitop.getB(yla) + Bitop.getB(ala)
-                + Bitop.getB(oikea) + Bitop.getB(vasen)) / 8;
+        //jokaiselle väriarvolle R, G, B blur erikseen.
+        int r = blur(Bitop.getR(keski), Bitop.getR(yla), Bitop.getR(ala), Bitop.getR(oikea), Bitop.getR(vasen));
+        int g = blur(Bitop.getG(keski), Bitop.getG(yla), Bitop.getG(ala), Bitop.getG(oikea), Bitop.getG(vasen));
+        int b = blur(Bitop.getB(keski), Bitop.getB(yla), Bitop.getB(ala), Bitop.getB(oikea), Bitop.getB(vasen));
 
         //palauta blurrattu pikseli
         return Bitop.makePixel(r, g, b);
-
+    }
+    
+    private static int sharpen(int keski, int yla, int ala, int oikea, int vasen) {
+        int arvo = (4 * keski - yla - ala - oikea - vasen) / 8;
+        
+        //arvo ei saa mennä alle nollan
+        return Math.max(arvo, 0);
+    }
+    
+    private static int blur(int keski, int yla, int ala, int oikea, int vasen) {        
+        return (4 * keski + yla + ala + oikea + vasen) / 8;
     }
 }
