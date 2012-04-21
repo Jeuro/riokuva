@@ -21,13 +21,7 @@ public class ImageEditor {
             thread.start();
         }
 
-        for (Thread thread : this.threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(ImageEditor.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
+        this.joinThreads();
     }
 
     public void blur(PixelImage image, PixelImage newImage) {
@@ -38,7 +32,11 @@ public class ImageEditor {
             this.threads.add(thread);
             thread.start();
         }
-
+        
+        this.joinThreads();
+    }
+    
+    private void joinThreads() {
         for (Thread thread : this.threads) {
             try {
                 thread.join();
