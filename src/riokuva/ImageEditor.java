@@ -11,10 +11,11 @@ public class ImageEditor {
     public ImageEditor(int numOfThreads) {
         this.numOfThreads = numOfThreads;
     }
-
+    
     public void sharpen(PixelImage image, PixelImage newImage) {
         this.threads = new ArrayList<Thread>();
 
+        //aloitetaan numOfThreadsin mukainen määrä sharpen-prosesseja
         for (int i = 0; i < this.numOfThreads; i++) {
             Thread thread = new SharpenThread(image, newImage, i + 1, this.numOfThreads);
             this.threads.add(thread);
@@ -27,6 +28,7 @@ public class ImageEditor {
     public void blur(PixelImage image, PixelImage newImage) {
         this.threads = new ArrayList<Thread>();
 
+        //aloitetaan numOfThreadsin mukainen määrä blur-prosesseja
         for (int i = 0; i < this.numOfThreads; i++) {
             Thread thread = new BlurThread(image, newImage, i + 1, this.numOfThreads);
             this.threads.add(thread);
@@ -36,6 +38,7 @@ public class ImageEditor {
         this.joinThreads();
     }
     
+    //odotetaan että kaikki prosessit ovat valmiita
     private void joinThreads() {
         for (Thread thread : this.threads) {
             try {

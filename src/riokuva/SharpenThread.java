@@ -13,8 +13,10 @@ public class SharpenThread extends Thread {
         this.startingRow = startingRow;
     }
 
+    // Käydään läpi prosessille osoitetut rivit kuvasta ja annetaan kyseisten rivien pikseleille uudet terävöidyt arvot
     @Override
     public void run() {
+        // Aloitusrivin jälkeen hypätään yli niin monta kuvan riviä kuin on muita suorittavia prosesseja
         for (int y = this.startingRow; y < this.image.getHeight() - 1; y += this.numOfThreads) {
             for (int x = 1; x < this.image.getWidth() - 1; x++) {
                 this.newImage.setRGB(x, y, PixelEditor.sharpenPixel(this.image, x, y));
