@@ -12,7 +12,7 @@ public class BlurThread extends Thread {
         this.numOfThreads = numOfThreads;
         this.startingRow = startingRow;
     }
-    
+
     // Käydään läpi prosessille osoitetut rivit kuvasta ja annetaan kyseisten rivien pikseleille uudet pehmennetyt arvot
     @Override
     public void run() {

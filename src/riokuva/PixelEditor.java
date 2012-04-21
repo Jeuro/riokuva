@@ -1,7 +1,6 @@
 package riokuva;
 
-public class PixelEditor {   
-    
+public class PixelEditor {
     // Palauttaa terävöitetyn kuvan. Kaava on susi, joten
     // palauttaa lähes aina mustaa    
     public static int sharpenPixel(PixelImage kuva, int x, int y) {
@@ -14,8 +13,8 @@ public class PixelEditor {
 
         // Jokaiselle väriarvolle R, G, B sharpen erikseen.
         int r = sharpen(Bitop.getR(keski), Bitop.getR(yla), Bitop.getR(ala), Bitop.getR(oikea), Bitop.getR(vasen));
-        int g = sharpen(Bitop.getG(keski),Bitop.getG(yla),Bitop.getG(ala), Bitop.getG(oikea), Bitop.getG(vasen));
-        int b = sharpen(Bitop.getB(keski),Bitop.getB(yla),Bitop.getB(ala), Bitop.getB(oikea), Bitop.getB(vasen));
+        int g = sharpen(Bitop.getG(keski), Bitop.getG(yla), Bitop.getG(ala), Bitop.getG(oikea), Bitop.getG(vasen));
+        int b = sharpen(Bitop.getB(keski), Bitop.getB(yla), Bitop.getB(ala), Bitop.getB(oikea), Bitop.getB(vasen));
 
         // palauta sharpenettu pikseli
         return Bitop.makePixel(r, g, b);
@@ -38,15 +37,15 @@ public class PixelEditor {
         //palauta blurrattu pikseli
         return Bitop.makePixel(r, g, b);
     }
-    
+
     private static int sharpen(int keski, int yla, int ala, int oikea, int vasen) {
         int arvo = (4 * keski - yla - ala - oikea - vasen) / 8;
-        
+
         //arvo ei saa mennä alle nollan
         return Math.max(arvo, 0);
     }
-    
-    private static int blur(int keski, int yla, int ala, int oikea, int vasen) {        
+
+    private static int blur(int keski, int yla, int ala, int oikea, int vasen) {
         return (4 * keski + yla + ala + oikea + vasen) / 8;
     }
 }

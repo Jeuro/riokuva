@@ -11,7 +11,7 @@ public class ImageEditor {
     public ImageEditor(int numOfThreads) {
         this.numOfThreads = numOfThreads;
     }
-    
+
     public void sharpen(PixelImage image, PixelImage newImage) {
         this.threads = new ArrayList<Thread>();
 
@@ -34,10 +34,10 @@ public class ImageEditor {
             this.threads.add(thread);
             thread.start();
         }
-        
+
         this.joinThreads();
     }
-    
+
     //odotetaan että kaikki prosessit ovat valmiita
     private void joinThreads() {
         for (Thread thread : this.threads) {
